@@ -1,5 +1,7 @@
---===[ GLOBAL TOGGLE & CONFIGS ]===
+--===[ GLOBAL TOGGLE ]===
 _G.AutoBotEnabled = true
+
+--===[ CONFIGS ]===
 _G.DelayDodgeNormal = 0.15
 _G.DelayDodgeHeavy = 0.3
 _G.activateRange = 10
@@ -83,12 +85,10 @@ Main.StartupHighlight = function(data)
 
         task.spawn(function()
             if isFeint then
-                if _G.EnableFeint then
-                    keyrelease(0x46)
-                    mouse1press()
-                    task.wait(_G.M1Delay)
-                    mouse1release()
-                end
+                keyrelease(0x46)
+                mouse1press()
+                task.wait(_G.M1Delay)
+                mouse1release()
             elseif isHeavy then
                 if _G.EnableCounter then
                     keyrelease(0x46)
@@ -155,37 +155,82 @@ task.spawn(function()
     end
 end)
 
---===[ GUI LIBRARY INIT ]===
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/drillygzzly/Other/main/1"))()
-library:init()
+--===[ GUI ]===
+local gui = Instance.new("ScreenGui")
+gui.Name = "AutoBotConfig"
+gui.ResetOnSpawn = false
+gui.Parent = PlayerGui
 
-local Window = library.NewWindow({
-    title = "AutoBot Controller",
-    size = UDim2.new(0, 525, 0, 650)
-})
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 220)
+frame.Position = UDim2.new(0, 10, 1, -240)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.1
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
 
-local tabs = {
-    Main = Window:AddTab("Main"),
-    Settings = library:CreateSettingsTab(Window)
-}
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
 
-local sections = {
-    Toggles = tabs.Main:AddSection("Toggles", 1),
-    Config = tabs.Main:AddSection("Config", 2)
-}
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 8)
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.Parent = frame
 
---===[ TOGGLES ]===
-sections.Toggles:AddToggle({ text = "Auto Bot Enabled", enabled = _G.AutoBotEnabled, callback = function(state) _G.AutoBotEnabled = state end })
-sections.Toggles:AddToggle({ text = "Counter", enabled = _G.EnableCounter, callback = function(state) _G.EnableCounter = state end })
-sections.Toggles:AddToggle({ text = "Feint", enabled = _G.EnableFeint, callback = function(state) _G.EnableFeint = state end })
-sections.Toggles:AddToggle({ text = "Idle Attack", enabled = _G.EnableIdleAttack, callback = function(state) _G.EnableIdleAttack = state end })
-sections.Toggles:AddToggle({ text = "Dodge", enabled = _G.EnableDodge, callback = function(state) _G.EnableDodge = state end })
+-- Close button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 20, 0, 20)
+closeBtn.Position = UDim2.new(1, -25, 0, 5)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.Parent = frame
+closeBtn.MouseButton1Click:Connect(function()
+    _G.AutoBotEnabled = false
+    _G.EnableCounter = false
+    _G.EnableIdleAttack = false
+    _G.EnableDodge = false
+    _G.EnableFeint = false
+    gui:Destroy()
+end)
 
---===[ CONFIG INPUTS ]===
-sections.Config:AddBox({ text = "Delay Dodge Normal", input = tostring(_G.DelayDodgeNormal), callback = function(val) local num = tonumber(val) if num then _G.DelayDodgeNormal = num end end })
-sections.Config:AddBox({ text = "Delay Dodge Heavy", input = tostring(_G.DelayDodgeHeavy), callback = function(val) local num = tonumber(val) if num then _G.DelayDodgeHeavy = num end end })
-sections.Config:AddBox({ text = "Activate Range", input = tostring(_G.activateRange), callback = function(val) local num = tonumber(val) if num then _G.activateRange = num end end })
-sections.Config:AddBox({ text = "M1 Delay", input = tostring(_G.M1Delay), callback = function(val) local num = tonumber(val) if num then _G.M1Delay = num end end })
-sections.Config:AddBox({ text = "Feint Delay", input = tostring(_G.FeintDelay), callback = function(val) local num = tonumber(val) if num then _G.FeintDelay = num end end })
+local function createToggle(label, key)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -20, 0, 30)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 14
+    btn.AutoButtonColor = true
+    btn.BorderSizePixel = 2
+    btn.Parent = frame
 
-library:SendNotification("AutoBot Fully Loaded", 5, Color3.fromRGB(0, 200, 0))
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+
+    if _G[key] == nil then _G[key] = false end
+
+    local function updateStyle()
+        btn.Text = label .. ": " .. (_G[key] and "ON" or "OFF")
+        btn.BorderColor3 = _G[key] and Color3.fromRGB(0, 255, 0) or btn.BackgroundColor3
+    end
+
+    btn.MouseButton1Click:Connect(function()
+        _G[key] = not _G[key]
+        updateStyle()
+    end)
+
+    updateStyle()
+end
+
+createToggle("Main", "AutoBotEnabled")
+createToggle("Counter", "EnableCounter")
+createToggle("Feint", "EnableFeint")
+createToggle("Idle Attack", "EnableIdleAttack")
+createToggle("Dodge", "EnableDodge")
